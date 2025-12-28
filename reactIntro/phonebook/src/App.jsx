@@ -13,7 +13,11 @@ const App = () => {
   ]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
-  const [search, setSearch]
+  const [search, setSearch] = useState("");
+
+  const searchPerson = persons.filter((p) =>
+    p.name.toLocaleLowerCase().includes(search.toLocaleLowerCase())
+  );
 
   const updatePhonebook = (e) => {
     e.preventDefault();
@@ -33,8 +37,9 @@ const App = () => {
   return (
     <div>
       <h1>Phonebook</h1>
-      <div>Search:
-        <input />
+      <div>
+        Search:
+        <input value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
       <h2>Add new</h2>
       <form>
@@ -56,7 +61,7 @@ const App = () => {
         </div>
       </form>
       <h2>Numbers</h2>
-      <DisplayPhonebook persons={persons} />
+      <DisplayPhonebook persons={searchPerson} />
     </div>
   );
 };
