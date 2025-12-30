@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 const DisplayPhonebook = ({ persons }) => {
-  return persons.map((p, index) => (
-    <div key={index}>
+  return persons.map((p) => (
+    <div key={p.id}>
       {p.name} - {p.number}
     </div>
   ));
@@ -65,12 +66,7 @@ const PersonForm = ({
 };
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    {
-      name: "Artes Hellas",
-      number: "18000-50000",
-    },
-  ]);
+  const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [search, setSearch] = useState("");
@@ -78,6 +74,12 @@ const App = () => {
   const searchPerson = persons.filter((p) =>
     p.name.toLocaleLowerCase().includes(search.toLocaleLowerCase())
   );
+
+  useEffect(() => {
+    axios.get("http://localhost:3001/persons").then((response) => {
+      setPersons(response.data);
+    });
+  }, []);
 
   return (
     <div>
