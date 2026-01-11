@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import contactService from "./services/contacts";
 
-const DisplayPhonebook = ({ persons }) => {
+const DisplayPhonebook = ({ persons, removePerson }) => {
   return persons.map((p) => (
     <div key={p.id}>
       {p.name} - {p.number}
+      <button onClick={() => removePerson(p.id)}>Delete</button>
     </div>
   ));
 };
@@ -28,17 +29,36 @@ const PersonForm = ({
 }) => {
   const updatePhonebook = (e) => {
     e.preventDefault();
-    const nameExists = persons.some((p) => p.name === newName);
-    const numberExists = persons.some((p) => p.number === newNumber);
-    if (nameExists || numberExists) {
-      alert(`${newName} or ${newNumber} already exists.`);
-      return;
+    const existingPerson = persons.find((p) => p.name === newName);
+
+    if (existingPerson) {
+      //if name exists -> updating their number
+      const updatedPerson = { ...existingPerson, number: newNumber };
+      contactService
+        .update(existingPerson.id, updatedPerson)
+        .then((returnedPerson) => {
+          setPersons(
+            persons.map((p) =>
+              p.id !== existingPerson.id ? p : returnedPerson
+            )
+          );
+          setNewNumber("");
+          setNewName("");
+        })
+        .catch((error) => {
+          console.log(error);
+          alert(`Could not update ${newName}`);
+        });
+    } else {
+      //Adding new Person
+      contactService
+        .create({ name: newName, number: newNumber })
+        .then((returnedPerson) => {
+          setPersons([...persons, returnedPerson]);
+          setNewNumber("");
+          setNewName("");
+        });
     }
-    setPersons([...persons, { name: newName, number: newNumber }]);
-    setNewNumber("");
-    setNewName("");
-    console.log({ newName });
-    console.log({ newNumber });
   };
 
   return (
@@ -76,10 +96,19 @@ const App = () => {
   );
 
   useEffect(() => {
-    axios.get("http://localhost:3001/persons").then((response) => {
-      setPersons(response.data);
+    contactService.getAll().then((initialContacts) => {
+      setPersons(initialContacts);
     });
   }, []);
+
+  const removePerson = (id) => {
+    const person = persons.find((p) => p.id === id);
+    if (window.confirm(`Delete ${person.name}?`)) {
+      contactService.remove(id).then(() => {
+        setPersons(persons.filter((p) => p.id !== id));
+      });
+    }
+  };
 
   return (
     <div>
@@ -95,7 +124,7 @@ const App = () => {
         setPersons={setPersons}
       ></PersonForm>
       <h2>Numbers</h2>
-      <DisplayPhonebook persons={searchPerson} />
+      <DisplayPhonebook persons={searchPerson} removePerson={removePerson} />
     </div>
   );
 };
